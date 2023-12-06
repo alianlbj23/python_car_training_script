@@ -33,9 +33,9 @@ class AiNode(Node):
     def __init__(self):
         super().__init__("aiNode")
         self.get_logger().info("Ai start")#ros2Ai #unity2Ros
-        self.subsvriber_ = self.create_subscription(String, "unity2Ros", self.receive_data_from_ros, 10)
+        self.subsvriber_ = self.create_subscription(String, "/unity2Ros", self.receive_data_from_ros, 10)
         
-        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, 'ros2Unity', 10)#Ai2ros #ros2Unity
+        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, '/ros2Unity', 10)#Ai2ros #ros2Unity
         
 
     
@@ -87,6 +87,7 @@ class Env(Environment):
             collision = min(state.min_lidar) < 0.1
         except:
             pass
+        print(state.min_lidar_direciton)
         self.turnover = (state.objectUpVector < 0)
         self.pos = [state.car_pos.x, state.car_pos.y]
         self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
