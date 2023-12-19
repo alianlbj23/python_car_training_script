@@ -1,4 +1,3 @@
-
 import DDPG
 import Utility
 from stable_baselines3.common.noise import NormalActionNoise
@@ -8,14 +7,15 @@ import torch
 import abc
 import os
 
+
 class Agent():
     def __init__(self, q_lr, pi_lr, gamma, rho, pretrained=False, new_input_dims=12, input_dims=11, n_actions=4,
                  layer1_size=400, layer2_size=300, batch_size=100, chpt_dir_load='Model/DDPG', \
-                    chpt_dir_save='Model/DDPG'):
+                 chpt_dir_save='Model/DDPG'):
         self.rho = rho
         self.gamma = gamma
         self.batch_size = batch_size
-   
+
         # self.noice = ddpg.OUActionNoise(mu = np.zeros(n_actions)) don't know why the result is badbadbad
         # TODO: use DDPG Gaussian as NormalActionNoise  
         self.noice = NormalActionNoise(mean=np.zeros(
@@ -33,36 +33,42 @@ class Agent():
             self.memory = DDPG.ReplayBuffer(input_dims=new_input_dims, n_actions=n_actions)
 
             self.pretrained_critic = DDPG.CriticNetwork(q_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='Crirtic_')
+                                                        chpt_dir_load, chpt_dir_save, name='Crirtic_')
             self.pretrained_actor = DDPG.ActorNetwork(pi_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='Actor_')
+                                                      chpt_dir_load, chpt_dir_save, name='Actor_')
             self.pretrained_target_critic = DDPG.CriticNetwork(q_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='TargetCrirtic_')
+                                                               chpt_dir_load, chpt_dir_save, name='TargetCrirtic_')
             self.pretrained_target_critic.load_state_dict(self.pretrained_critic.state_dict())
             self.pretrained_target_actor = DDPG.ActorNetwork(pi_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='TargetActor_')
+                                                             chpt_dir_load, chpt_dir_save, name='TargetActor_')
             self.pretrained_target_actor.load_state_dict(self.pretrained_actor.state_dict())
-                                                        
-            self.critic = DDPG.PretrainedCriticNetwork(self.pretrained_critic, q_lr, new_input_dims, input_dims, chpt_dir_load, chpt_dir_save, name='Crirtic_')
-            self.actor = DDPG.PretrainedActorNetwork(self.pretrained_actor, pi_lr, new_input_dims, input_dims, chpt_dir_load, chpt_dir_save, name='Actor_')
-            self.target_critic = DDPG.PretrainedCriticNetwork(self.pretrained_target_critic, q_lr, new_input_dims, input_dims, chpt_dir_load, chpt_dir_save, name='TargetCrirtic_')
+
+            self.critic = DDPG.PretrainedCriticNetwork(self.pretrained_critic, q_lr, new_input_dims, input_dims,
+                                                       chpt_dir_load, chpt_dir_save, name='Crirtic_')
+            self.actor = DDPG.PretrainedActorNetwork(self.pretrained_actor, pi_lr, new_input_dims, input_dims,
+                                                     chpt_dir_load, chpt_dir_save, name='Actor_')
+            self.target_critic = DDPG.PretrainedCriticNetwork(self.pretrained_target_critic, q_lr, new_input_dims,
+                                                              input_dims, chpt_dir_load, chpt_dir_save,
+                                                              name='TargetCrirtic_')
             self.target_critic.load_state_dict(self.critic.state_dict())
-            self.target_actor = DDPG.PretrainedActorNetwork(self.pretrained_target_actor, pi_lr, new_input_dims, input_dims, chpt_dir_load, chpt_dir_save, name='TargetActor_')
+            self.target_actor = DDPG.PretrainedActorNetwork(self.pretrained_target_actor, pi_lr, new_input_dims,
+                                                            input_dims, chpt_dir_load, chpt_dir_save,
+                                                            name='TargetActor_')
             self.target_actor.load_state_dict(self.actor.state_dict())
         else:
             self.memory = DDPG.ReplayBuffer(input_dims=input_dims, n_actions=n_actions)
 
             self.critic = DDPG.CriticNetwork(q_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='Crirtic_')
-            
+                                             chpt_dir_load, chpt_dir_save, name='Crirtic_')
+
             self.actor = DDPG.ActorNetwork(pi_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='Actor_')
-            
+                                           chpt_dir_load, chpt_dir_save, name='Actor_')
+
             self.target_critic = DDPG.CriticNetwork(q_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='TargetCrirtic_')
+                                                    chpt_dir_load, chpt_dir_save, name='TargetCrirtic_')
             self.target_critic.load_state_dict(self.critic.state_dict())
             self.target_actor = DDPG.ActorNetwork(pi_lr, input_dims, layer1_size, layer2_size, n_actions, \
-                chpt_dir_load, chpt_dir_save, name='TargetActor_')
+                                                  chpt_dir_load, chpt_dir_save, name='TargetActor_')
             self.target_actor.load_state_dict(self.actor.state_dict())
 
         self.update_network_parameters(rho=1)
@@ -90,12 +96,12 @@ class Agent():
 
         for name in critic_params_dict:
             critic_params_dict[name] = rho * critic_params_dict[name].clone() + \
-                (1 - rho) * target_critic_params_dict[name].clone()
+                                       (1 - rho) * target_critic_params_dict[name].clone()
         self.target_critic.load_state_dict(critic_params_dict)
 
         for name in actor_params_dict:
             actor_params_dict[name] = rho * actor_params_dict[name].clone() + \
-                (1 - rho) * target_actor_params_dict[name].clone()
+                                      (1 - rho) * target_actor_params_dict[name].clone()
         self.target_actor.load_state_dict(actor_params_dict)
 
     def learn(self):
@@ -191,23 +197,21 @@ class Agent():
             self.actor.load_checkpoint(tag)
             self.target_critic.load_checkpoint(tag)
             self.target_actor.load_checkpoint(tag)
-      
+
     def eval(self):
         self.critic.eval()
         self.actor.eval()
         self.target_critic.eval()
         self.target_actor.eval()
-    
+
     def store_transition(self, obs, actions, rewards, new_obs, done, prev_pos, trail_original_pos):
         self.memory.store_transition(self.processFeature(obs, prev_pos, trail_original_pos), actions, rewards,
-                                              self.processFeature(new_obs, prev_pos, trail_original_pos), done)
+                                     self.processFeature(new_obs, prev_pos, trail_original_pos), done)
 
     # override
     def choose_actions(self, obs, prev_pos, trail_original_pos, inference: bool):
         pass
-  
-    
+
     # override
     def processFeature(self, state: dict, prev_pos, trail_original_pos):
         pass
- 

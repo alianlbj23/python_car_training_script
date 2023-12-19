@@ -4,6 +4,7 @@ import torch
 import os
 import numpy as np
 
+
 class CriticNetwork(nn.Module):
     def __init__(self, q_lr, input_dims, fc1_dims, fc2_dims, n_actions, chept_dir_load, chept_dir_save, name):
         super(CriticNetwork, self).__init__()
@@ -42,13 +43,14 @@ class CriticNetwork(nn.Module):
     def load_checkpoint(self, tag):
         print('...loading checkpoint...')
         self.load_state_dict(torch.load(os.path.join(
-            self.chept_dir_load, 
-            self.name + '{t}' + '_ddpg').format(t=tag), 
-            map_location=self.device))
-    
+            self.chept_dir_load,
+            self.name + '{t}' + '_ddpg').format(t=tag),
+                                        map_location=self.device))
+
     def add_layers(self, new_input_dims):
         new_layer = nn.Linear(new_input_dims + self.n_actions, self.input_dims + self.n_actions)
         self.add_module('new_layer', new_layer)
+
 
 class ActorNetwork(nn.Module):
     def __init__(self, pi_lr, input_dims, fc1_dims, fc2_dims, n_actions, chept_dir_load, chept_dir_save, name):
@@ -77,34 +79,36 @@ class ActorNetwork(nn.Module):
         x = self.relu(x)
         x = self.l3(x)
         x = torch.tanh(x)
-        
+
         return x
 
     def save_checkpoint(self, tag):
         print('...saving checkpoint...')
         torch.save(self.state_dict(), os.path.join(
             self.chept_dir_save, self.name + '{t}' + '_ddpg').format(t=tag))
+
     def load_checkpoint(self, tag):
         print('...loading checkpoint...')
         self.load_state_dict(torch.load(os.path.join(
-            self.chept_dir_load, 
+            self.chept_dir_load,
             self.name + '{t}' + '_ddpg').format(t=tag),
-            map_location=self.device))
-    
+                                        map_location=self.device))
+
     def add_layers(self, new_input_dims):
         new_layer = nn.Linear(new_input_dims, self.input_dims)
         self.add_module('new_layer', new_layer)
 
+
 class ReplayBuffer():
-    def __init__(self, input_dims, n_actions, max_size = 1000000): ### 10000
+    def __init__(self, input_dims, n_actions, max_size=1000000):  ### 10000
         self.size = max_size
         self.cntr = 0
         self.state_mem = np.zeros((self.size, input_dims))
         self.action_mem = np.zeros((self.size, n_actions))
-        self.reward_mem = np.zeros(self.size) 
+        self.reward_mem = np.zeros(self.size)
         self.new_state_mem = np.zeros((self.size, input_dims))
-        self.terminal_mem = np.zeros(self.size, dtype = np.float32)
-    
+        self.terminal_mem = np.zeros(self.size, dtype=np.float32)
+
     def store_transition(self, s, a, r, s_, d):
         index = self.cntr % self.size
         self.state_mem[index] = s
@@ -113,7 +117,7 @@ class ReplayBuffer():
         self.new_state_mem[index] = s_
         self.terminal_mem[index] = d
         self.cntr += 1
-    
+
     def sample_buffer(self, batch_size):
         max_mem = min(self.cntr, self.size)
         # batch = np.random.choice(max_mem, batch_size)
@@ -147,7 +151,8 @@ class OUActionNoise(object):
 
     def __repr__(self):
         return 'OrnsteinUhlenbeckActionNoise(mu={}, sigma={})'.format(
-                                                            self.mu, self.sigma)
+            self.mu, self.sigma)
+
 
 class GaussianActionNoise(object):
     def __init__(self, mean: np.ndarray, sigma: np.ndarray):
@@ -160,8 +165,10 @@ class GaussianActionNoise(object):
     def __repr__(self) -> str:
         return f"GaussianActionNoise(mu={self._mu}, sigma={self._sigma})"
 
+
 class PretrainedCriticNetwork(nn.Module):
-    def __init__(self, pretrained_module, q_lr, new_input_dims, original_input_dims, chept_dir_load, chept_dir_save, name):
+    def __init__(self, pretrained_module, q_lr, new_input_dims, original_input_dims, chept_dir_load, chept_dir_save,
+                 name):
         super(PretrainedCriticNetwork, self).__init__()
 
         self.l0 = nn.Linear(new_input_dims, original_input_dims)
@@ -192,12 +199,14 @@ class PretrainedCriticNetwork(nn.Module):
     def load_checkpoint(self, tag):
         print('...loading checkpoint...')
         self.load_state_dict(torch.load(os.path.join(
-            self.chept_dir_load, 
-            self.name + '{t}' + '_ddpg').format(t=tag), 
-            map_location=self.device))
+            self.chept_dir_load,
+            self.name + '{t}' + '_ddpg').format(t=tag),
+                                        map_location=self.device))
+
 
 class PretrainedActorNetwork(nn.Module):
-    def __init__(self, pretrained_module, pi_lr, new_input_dims, original_input_dims, chept_dir_load, chept_dir_save, name):
+    def __init__(self, pretrained_module, pi_lr, new_input_dims, original_input_dims, chept_dir_load, chept_dir_save,
+                 name):
         super(PretrainedActorNetwork, self).__init__()
 
         self.l0 = nn.Linear(new_input_dims, original_input_dims)
@@ -215,7 +224,6 @@ class PretrainedActorNetwork(nn.Module):
         self.to(self.device)
 
     def forward(self, state):
-
         x = self.l0(state)
         x = self.relu(x)
         x = self.l1(x)
@@ -225,9 +233,10 @@ class PretrainedActorNetwork(nn.Module):
         print('...saving checkpoint...')
         torch.save(self.state_dict(), os.path.join(
             self.chept_dir_save, self.name + '{t}' + '_ddpg').format(t=tag))
+
     def load_checkpoint(self, tag):
         print('...loading checkpoint...')
         self.load_state_dict(torch.load(os.path.join(
-            self.chept_dir_load, 
+            self.chept_dir_load,
             self.name + '{t}' + '_ddpg').format(t=tag),
-            map_location=self.device))
+                                        map_location=self.device))

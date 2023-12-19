@@ -8,10 +8,9 @@ from datetime import datetime
 from Entity import State
 
 
-
 class Environment():
     def __init__(self, max_times_in_episode, max_times_in_game, end_distance=(1, 15), \
-        save_log=False, stop_target=True, target_fixed_sec=8, min_angle_diff=10):
+                 save_log=False, stop_target=True, target_fixed_sec=8, min_angle_diff=10):
         self.devie = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.pos = [0, 0]
         self.target_pos = None
@@ -34,7 +33,7 @@ class Environment():
             self.log = {"obs": []}
             with open(os.path.join(os.path.dirname(__file__), "state_log_virtual_edge.txt"), "w") as f:
                 json.dump(self.log, f)
-        
+
         self.target_fixed_sec = target_fixed_sec
         self.stop_target = stop_target
         self.end_distance = end_distance
@@ -44,7 +43,6 @@ class Environment():
         self.distance_out = False
         self.game_finished = False
         self.reach_goal = False
-        
 
     def calculate_orientation_diff(self, car_orientation, target_orientation):
         diff = abs(target_orientation - car_orientation)
@@ -99,8 +97,8 @@ class Environment():
                 self.prev_time -= 60
             if (self.time - self.prev_time) >= self.target_fixed_sec:
                 self.prev_time = self.time
-            restart_game = True    
-                    
+            restart_game = True
+
         return restart_game
 
     def restart_game(self, state: State):
@@ -118,8 +116,7 @@ class Environment():
     # override
     def check_termination(self):
         pass
-     
+
     # override
     def step(self, obs, new_obs):
         pass
-      

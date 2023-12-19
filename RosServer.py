@@ -17,13 +17,10 @@ class AiNode(Node):
     def returnData(self):
         return self.unityState
 
-    
-    
     def receive_data_from_ros(self, msg):
         self.unityState = msg.data
         print(self.unityState)
-        
-        
+
 
 def spin_pros(node):
     exe = rclpy.executors.SingleThreadedExecutor()
@@ -31,19 +28,13 @@ def spin_pros(node):
     exe.spin()
     rclpy.shutdown()
     sys.exit(0)
-    
 
 
 def main():
     rclpy.init()
     node = AiNode()
     pros = threading.Thread(target=spin_pros, args=(node,))
-    pros.start()    
-    
+    pros.start()
 
-    
-
-    
-    
 # if __name__ == "__main__":
 #     main()
