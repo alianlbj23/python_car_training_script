@@ -6,6 +6,7 @@ import os
 import json
 from datetime import datetime
 from Entity import State
+import Entity
 
 
 class Environment():
@@ -114,9 +115,127 @@ class Environment():
         self.distance = self.calculate_distance(self.pos, self.target_pos)
 
     # override
-    def check_termination(self):
-        pass
+    def check_termination(self, state):
+        try:
+            print(min(state.min_lidar))
+            collision = min(state.min_lidar) < 0.1
+        except:
+            pass
+        # print(state.min_lidar_direciton)
+        self.turnover = (state.objectUpVector < 0)
+        self.pos = [state.car_pos.x, state.car_pos.y]
+        self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
+        # print("target position: ", self.target_pos)
+        # print("car position: ", self.pos)
 
-    # override
-    def step(self, obs, new_obs):
-        pass
+        distance = math.dist(self.pos, self.target_pos)
+
+        self.reach_goal = ((abs(self.carOrientation - self.targetOrientation) <= 20) \
+                           and distance <= self.end_distance[0])
+
+        # self.reach_goal = (abs(self.carOrientation - self.targetOrientation) < 5) 
+        print("distance", distance)
+        self.distance_out = distance >= self.end_distance[1] or distance <= self.end_distance[0]
+        try:
+            self.game_finished = self.game_ctr >= self.max_times_in_game or collision or self.turnover
+
+        except:
+            pass
+        if self.reach_goal:
+            print("reach_goal!!!!!!!!!!!!!!!!!!!")
+        # if self.episode_ctr >= self.max_times_in_episode:
+        #     print("episode ctr >= {}".format(self.max_times_in_episode))
+        if self.game_finished:
+            print("game_ctr >= {}".format(self.max_times_in_game))
+        if distance <= self.end_distance[0]:
+            print("distance <= {}".format(self.end_distance[0]))
+        if distance >= self.end_distance[1]:
+            print("distance >= {}".format(self.end_distance[1]))
+
+        done = self.reach_goal or self.distance_out \
+               or self.episode_ctr >= self.max_times_in_episode \
+               or self.game_finished
+        return done, self.reach_goal
+
+    def calculate_reward(self, state: Entity.State, new_state: Entity.State):
+        reward = 0
+
+        self.pos = [new_state.car_pos.x, new_state.car_pos.y]
+        self.prev_pos = [state.car_pos.x, state.car_pos.y]
+
+        self.carOrientation = Utility.rad2deg(new_state.car_orientation)
+        prevCarOrientation = Utility.rad2deg(state.car_orientation)
+
+        target_pos = [state.final_target_pos.x, state.final_target_pos.y]
+
+        self.targetOrientation = Utility.rad2deg(Utility.radFromUp(self.pos, target_pos))
+
+        ### distance to final target
+        prevTargetDist = self.calculate_distance(self.prev_pos, target_pos)
+        distanceToTarget = self.calculate_distance(self.pos, target_pos)
+
+        distanceDiff = distanceToTarget - prevTargetDist
+
+        # if distanceDiff > 5:
+        #     reward -= distanceDiff*800
+        # elif distanceDiff > 3:
+        #     reward -= distanceDiff*300
+
+        # elif distanceDiff < 3:
+        #     reward += distanceDiff*200
+        # elif distanceDiff < 2.5:
+        #     reward += distanceDiff*400
+
+        if distanceDiff > 0:
+            distanceDiff *= 2
+            distanceDiff *= 400
+            reward -= distanceDiff
+        elif distanceDiff < 0:
+            reward += 100 * -(distanceDiff)
+
+        ### angle gap to target
+        prevTargetOrientation = Utility.rad2deg(Utility.radFromUp(self.prev_pos, target_pos))
+
+        prevAngleGapToTarget = self.calculate_orientation_diff(prevCarOrientation, prevTargetOrientation)
+        TargetOrientation = Utility.rad2deg(Utility.radFromUp(self.pos, target_pos))
+        angleGapToTarget = self.calculate_orientation_diff(self.carOrientation, TargetOrientation)
+        targetAngleDiff = angleGapToTarget - prevAngleGapToTarget
+        # print('targetAngle: ', targetAngleDiff)
+        targetAngleDiff *= 4
+        if targetAngleDiff > 0:
+            targetAngleDiff *= 4
+        reward += -targetAngleDiff
+
+        if ((self.game_ctr - 1) // 5) == ((self.game_ctr - 2) // 5):
+            if (state.action_wheel_angular_vel.left_back < 0 and new_state.action_wheel_angular_vel.left_back > 0) or \
+                    (state.action_wheel_angular_vel.left_back > 0 and new_state.action_wheel_angular_vel.left_back < 0):
+                self.stucked_count += 1
+                # print("count ", self.stucked_count, self.game_ctr)
+        else:
+            self.stucked_count = 0
+
+        if self.stucked_count > 1:
+            reward += -200 * self.stucked_count
+            print("count ", self.stucked_count)
+
+        # print("total ", reward)
+        # print("----------------------")
+
+        return reward
+    def step(self, state, new_state):
+        self.episode_ctr += 1
+        self.game_ctr += 1
+        self.total_ctr += 1
+        # print("new_state: ", new_state.final_target_pos)
+        reward = self.calculate_reward(state, new_state)
+
+        done, reachGoal = self.check_termination(state)  # self.trailOrientation
+
+        if reachGoal:
+            reward += 400
+
+        info = {'prev pos': []}
+        info['prev pos'] = self.prev_pos
+        info['trail original pos'] = [0, 0]
+
+        return reward, done, info

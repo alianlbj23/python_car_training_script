@@ -276,6 +276,7 @@ class UnityAdaptor():
         # )
 
         self.prev_car_yaw = car_yaw_z
+        # print(state)
 
         return state
 

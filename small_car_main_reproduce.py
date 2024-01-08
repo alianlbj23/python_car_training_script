@@ -92,7 +92,7 @@ class Env(Environment):
             collision = min(state.min_lidar) < 0.1
         except:
             pass
-        print(state.min_lidar_direciton)
+        # print(state.min_lidar_direciton)
         self.turnover = (state.objectUpVector < 0)
         self.pos = [state.car_pos.x, state.car_pos.y]
         self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
@@ -391,7 +391,7 @@ def main(mode):
                     ai_action = agent.choose_actions(state, prev_pos, trail_original_pos, inference=False)
 
                     action_sent_to_unity, unity_action = unity_adaptor.trasfer_action(ai_action)
-
+                    print(action_sent_to_unity)
                     node.publish2Ros(action_sent_to_unity)
                     # server.sendAction(action_sent_to_unity)
 

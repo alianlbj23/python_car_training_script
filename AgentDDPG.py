@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import abc
 import os
+import Entity
 
 
 class Agent():
@@ -209,9 +210,54 @@ class Agent():
                                      self.processFeature(new_obs, prev_pos, trail_original_pos), done)
 
     # override
-    def choose_actions(self, obs, prev_pos, trail_original_pos, inference: bool):
-        pass
+    def choose_actions(self, obs, prev_pos, trail_original_pos, inference):
+        self.actor.eval()
+        obs = self.processFeature(obs, prev_pos, trail_original_pos)
+        obs = torch.tensor(obs, dtype=torch.float).to(self.device)
+        with torch.no_grad():
+            actions = self.actor.forward(obs).to(self.device)
+        self.actor.train()
 
-    # override
-    def processFeature(self, state: dict, prev_pos, trail_original_pos):
-        pass
+        # noice
+        if not inference:
+            actions = actions + torch.tensor(self.noice(), dtype=torch.float).to(self.device)
+
+        return actions.cpu().detach().numpy()
+
+    def processFeature(self, state: Entity.State, prev_pos, trail_original_pos):
+        feature = []
+
+        # distance between car and target
+        feature.append(state.car_pos.x - state.final_target_pos.x)
+        feature.append(state.car_pos.y - state.final_target_pos.y)
+
+        # angle in radian between up(0, 1)vector and car to target
+        rad = Utility.radFromUp([state.car_pos.x, state.car_pos.y], \
+                                [state.final_target_pos.x, state.final_target_pos.y])
+        feature.append(Utility.decomposeCosSin(rad))  # cos(radian), sin(radian) *2
+        # print("car to target: ", rad / DEG2RAD)
+
+        # car orientation(eular angles in radians)
+        feature.append(Utility.decomposeCosSin(state.car_orientation))
+        # print("car: ", state.car_orientation / DEG2RAD)
+
+        # car velocity
+        feature.append(state.car_vel.x)
+        feature.append(state.car_vel.y)
+        # print(state.car_vel.x)
+
+        # car angular velocity in radians(eular angles in radians)
+        feature.append(state.car_angular_vel)
+        # print(state.car_angular_vel)
+
+        # 前進軸 angular velocity in radians *4 --> *1
+
+        feature.append(state.wheel_angular_vel.left_back)
+        feature.append(state.wheel_angular_vel.right_back)
+
+        feature.append(state.action_wheel_angular_vel.left_back)
+        feature.append(state.action_wheel_angular_vel.right_back)
+
+        feature = Utility.flatten(feature)
+
+        return feature
