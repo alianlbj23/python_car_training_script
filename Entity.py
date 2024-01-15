@@ -6,10 +6,6 @@ class ROS2Point(BaseModel):
     y: float
     z: float
 
-
-# class lidar_direciton(BaseModel):
-#     list(float, float, float)
-
 # around ROS2 z axis, left +, right -, up 0, down 180
 class WheelOrientation(BaseModel):
     left_front: float = 0

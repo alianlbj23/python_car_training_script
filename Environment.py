@@ -1,18 +1,14 @@
 import torch
 import Utility
 import math
-# from CustomThread import CustomThread
 import os
 import json
 from datetime import datetime
-from Entity import State
-import Entity
-
+from config import ENVIRONMENT
 
 class Environment():
-    def __init__(self, max_times_in_episode, max_times_in_game, end_distance=(1, 15), \
-                 save_log=False, stop_target=True, target_fixed_sec=8, min_angle_diff=10):
-        self.devie = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    def __init__(self, save_log=False, min_angle_diff=10):
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.pos = [0, 0]
         self.target_pos = None
         self.real_target = None
@@ -26,8 +22,8 @@ class Environment():
         self.prev_time = datetime.now().second
         self.time = datetime.now().second
 
-        self.max_times_in_episode = max_times_in_episode
-        self.max_times_in_game = max_times_in_game
+        self.max_times_in_episode = ENVIRONMENT["MAX_TIMES_IN_EPISODE"]
+        self.max_times_in_game = ENVIRONMENT["MAX_TIMES_IN_GAME"]
 
         self.save_log = save_log
         if save_log:
@@ -35,9 +31,9 @@ class Environment():
             with open(os.path.join(os.path.dirname(__file__), "state_log_virtual_edge.txt"), "w") as f:
                 json.dump(self.log, f)
 
-        self.target_fixed_sec = target_fixed_sec
-        self.stop_target = stop_target
-        self.end_distance = end_distance
+        self.target_fixed_sec = ENVIRONMENT["TARGET_FIXED_SEC"]
+        self.stop_target = ENVIRONMENT["STOP_TARGET"]
+        self.end_distance = ENVIRONMENT["END_DISTANCE"]
         self.epsilon = 0.0001
         self.min_angle_diff = min_angle_diff
 
@@ -57,16 +53,6 @@ class Environment():
         distance = math.dist(car_pos, target_pos)
         return distance
 
-    # def radToPositiveDeg(self, rad):
-    #     # left +, right -, up 0, down 180 => clockwise: 0 - 359
-    #     deg = rad / DEG2RAD
-    #     if deg < 0:
-    #         deg = -deg
-    #     elif deg > 0:
-    #         deg = 360 - deg
-
-    #     return deg
-
     def save_log(self):
         f = open(os.path.join(os.path.dirname(__file__), "state_log_virtual_edge.txt"), 'w')
         log = json.dumps((self.log))
@@ -81,7 +67,7 @@ class Environment():
 
         self.episode_ctr = 0
 
-        restart_game = False
+        is_restart_game = False
 
         if (self.distance_out == True or self.reach_goal == True or self.game_finished == True):
             if self.distance_out == True:
@@ -90,7 +76,7 @@ class Environment():
                 print("reaches goal")
             if self.game_finished == True:
                 print("game is finished")
-            restart_game = True
+            is_restart_game = True
 
         if (self.stop_target == True):
             self.game_ctr = 0
@@ -98,19 +84,15 @@ class Environment():
                 self.prev_time -= 60
             if (self.time - self.prev_time) >= self.target_fixed_sec:
                 self.prev_time = self.time
-            restart_game = True
+            is_restart_game = True
 
-        return restart_game
+        return is_restart_game
 
-    def restart_game(self, state: State):
+    def restart_game(self, state):
         self.init = 1
         self.game_ctr = 0
         self.pos = [state.car_pos.x, state.car_pos.y]
-        self.inital_pos = self.pos
-        # self.pos = [0., 0.]
         self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
-        # self.target_pos = [self.pos[0] + obs['final target pos']['x'], self.pos[1] + obs['final target pos']['y']]
-
         self.trail_original_pos = [state.path_closest_pos.x, state.path_closest_pos.y]
         self.distance = self.calculate_distance(self.pos, self.target_pos)
 
@@ -121,19 +103,14 @@ class Environment():
             collision = min(state.min_lidar) < 0.1
         except:
             pass
-        # print(state.min_lidar_direciton)
         self.turnover = (state.objectUpVector < 0)
         self.pos = [state.car_pos.x, state.car_pos.y]
         self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
-        # print("target position: ", self.target_pos)
-        # print("car position: ", self.pos)
-
         distance = math.dist(self.pos, self.target_pos)
 
         self.reach_goal = ((abs(self.carOrientation - self.targetOrientation) <= 20) \
                            and distance <= self.end_distance[0])
 
-        # self.reach_goal = (abs(self.carOrientation - self.targetOrientation) < 5) 
         print("distance", distance)
         self.distance_out = distance >= self.end_distance[1] or distance <= self.end_distance[0]
         try:
@@ -143,8 +120,6 @@ class Environment():
             pass
         if self.reach_goal:
             print("reach_goal!!!!!!!!!!!!!!!!!!!")
-        # if self.episode_ctr >= self.max_times_in_episode:
-        #     print("episode ctr >= {}".format(self.max_times_in_episode))
         if self.game_finished:
             print("game_ctr >= {}".format(self.max_times_in_game))
         if distance <= self.end_distance[0]:
@@ -157,7 +132,7 @@ class Environment():
                or self.game_finished
         return done, self.reach_goal
 
-    def calculate_reward(self, state: Entity.State, new_state: Entity.State):
+    def calculate_reward(self, state, new_state):
         reward = 0
 
         self.pos = [new_state.car_pos.x, new_state.car_pos.y]
@@ -175,16 +150,6 @@ class Environment():
         distanceToTarget = self.calculate_distance(self.pos, target_pos)
 
         distanceDiff = distanceToTarget - prevTargetDist
-
-        # if distanceDiff > 5:
-        #     reward -= distanceDiff*800
-        # elif distanceDiff > 3:
-        #     reward -= distanceDiff*300
-
-        # elif distanceDiff < 3:
-        #     reward += distanceDiff*200
-        # elif distanceDiff < 2.5:
-        #     reward += distanceDiff*400
 
         if distanceDiff > 0:
             distanceDiff *= 2
@@ -222,11 +187,11 @@ class Environment():
         # print("----------------------")
 
         return reward
+    
     def step(self, state, new_state):
         self.episode_ctr += 1
         self.game_ctr += 1
         self.total_ctr += 1
-        # print("new_state: ", new_state.final_target_pos)
         reward = self.calculate_reward(state, new_state)
 
         done, reachGoal = self.check_termination(state)  # self.trailOrientation
