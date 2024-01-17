@@ -102,7 +102,7 @@ class Environment():
     # override
     def check_termination(self, state):
         try:
-            print(min(state.min_lidar))
+            # print(min(state.min_lidar))
             collision = min(state.min_lidar) < 0.1
         except:
             pass
@@ -121,14 +121,14 @@ class Environment():
 
         except:
             pass
-        # if self.reach_goal:
-        #     print("reach_goal!!!!!!!!!!!!!!!!!!!")
-        # if self.game_finished:
-        #     print("game_ctr >= {}".format(self.max_times_in_game))
-        # if distance <= self.end_distance[0]:
-        #     print("distance <= {}".format(self.end_distance[0]))
-        # if distance >= self.end_distance[1]:
-        #     print("distance >= {}".format(self.end_distance[1]))
+        if self.reach_goal:
+            print("reach_goal!!!!!!!!!!!!!!!!!!!")
+        if self.game_finished:
+            print("game_ctr >= {}".format(self.max_times_in_game))
+        if distance <= self.end_distance[0]:
+            print("distance <= {}".format(self.end_distance[0]))
+        if distance >= self.end_distance[1]:
+            print("distance >= {}".format(self.end_distance[1]))
 
         done = self.reach_goal or self.distance_out \
                or self.episode_ctr >= self.max_times_in_episode \

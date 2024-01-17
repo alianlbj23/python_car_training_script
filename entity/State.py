@@ -20,6 +20,7 @@ class StateType(BaseModel):
     wheel_angular_vel: WheelAngularVel  # around car wheel axis, front: +, back: -
     min_lidar: list = [] # meter
     min_lidar_direction: list = []
+    isFirst: bool = True
 
     # because orientation is transformed back to Unity coordinate system, here lidar direction alse needs to be transformed back from ROS2 to Unity
     # min_lidar_relative_angle: float # radian, base on car, right(x): 0, front(y): 90,  upper: 180 --->x 0, down: -180 --->x 0
@@ -47,6 +48,7 @@ class State:
                          third_min_lidar_position=ROS2Point(x=0.0, y=0.0, z=0.0),
                          max_lidar=0.0,
                          min_lidar_direciton=[0.0],
+                         isFirst= True,
                          action_wheel_angular_vel=WheelAngularVel(left_back=0.0, left_front=0.0, right_back=0.0,
                                                                          right_front=0.0),
                          action_wheel_orientation=WheelOrientation(left_front=0.0, right_front=0.0))
@@ -189,5 +191,6 @@ class State:
                                                      ),
             action_wheel_orientation=WheelOrientation(left_front=self.__discretize_wheel_steering_angle(ai_action[0]), \
                                                       right_front=self.__discretize_wheel_steering_angle(ai_action[0])),
+            isFirst = data["isFirst"]
 
         )

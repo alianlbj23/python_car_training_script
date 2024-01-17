@@ -15,17 +15,23 @@ from rclpy.node import Node
 import rclpy
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
+import sys
 
 class TrainingManager(Node):
     def __init__(self, mode):
+        super().__init__("aiNode")
+        self.get_logger().info("Ai start")  # ros2Ai #unity2Ros
+        self.subscriber_send_action = self.create_subscription(String, "/Unity2Trainer", self.send_action, 10)
+        self.subscriber = self.create_subscription(String, "/Unity2Trainer", self.train, 10)
+        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, '/Trainer2Unity', 10)  # Ai2ros #ros2Unity
+        self.unityState = ""
+        self.epoch = 1
+        
         self.mode = mode
         self.state = State()
         self.environment_training = Environment()
         self.agent_training = Agent()
         self.unity_adaptor_training = UnityAdaptor()
-        self.nodeManager = ROS2NodeManager()
-        self.ROSnode_transfer_data = AINode()
-        self.initialize_ros_node()
         self.initialize_seed()
         self.action_Unity_Unity_adaptor = [0, 0]
         self.sum_of_reward_in_one_episode = 0
@@ -45,6 +51,19 @@ class TrainingManager(Node):
         
         self.reward_history = []
         self.reward_history_ = []
+
+        self.prev_action_AI_agent = [0,0]
+        
+    
+    def publish2Ros(self, data):
+        data2Ros = Float32MultiArray()
+        data2Ros.data = data
+        self.publisher_Ai2ros.publish(data2Ros)
+    
+    def connect_Unity(self, state, action_Unity_Unity_adaptor):
+        self.unityState = self.return_unity_state()
+        state.update(self.unityState, action_Unity_Unity_adaptor)
+        return state.current_car_state_training
         
     def initialize_seed(self):
         seed = 123
@@ -56,18 +75,12 @@ class TrainingManager(Node):
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
 
-    def initialize_ros_node(self):
-        self.nodeManager.add_node(self.ROSnode_transfer_data)
-        self.nodeManager.start()
-
     def send_Action_to_Unity(self, prev_pos, trail_original_pos):
         action_AI_agent = self.agent_training.choose_actions(self.state.current_car_state_training, prev_pos, trail_original_pos, inference=False)
-        # print(action_AI_agent)
         action_sent_to_unity, action_Unity_Unity_adaptor = self.unity_adaptor_training.transfer_action(action_AI_agent)
         self.action_Unity_Unity_adaptor = action_Unity_Unity_adaptor
-        self.ROSnode_transfer_data.publish2Ros(action_sent_to_unity)
-
-        return action_AI_agent
+        self.publish2Ros(action_sent_to_unity)
+        self.prev_action_AI_agent = action_AI_agent
 
     def receive_State_from_Unity(self):
         unity_new_obs = self.ROSnode_transfer_data.return_unity_state()
@@ -76,26 +89,22 @@ class TrainingManager(Node):
         return reward
     
     def train_one_episode(self):
-        while (not self.done):
-            action_AI_agent = self.send_Action_to_Unity(self.environment_training.prev_pos, 
-                                                        self.environment_training.trail_original_pos)
-
-            time.sleep(0.5)
-            reward = self.receive_State_from_Unity()
-
+        if (not self.done):
+            self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
+            reward, self.done = self.environment_training.step(self.state.prev_car_state_training, self.state.current_car_state_training)
+            
             self.sum_of_reward_in_one_episode += reward
             self.agent_training.store_transition(self.state, 
-                                                 action_AI_agent, 
-                                                 reward, 
-                                                 int(self.done), 
-                                                 self.environment_training.prev_pos, 
-                                                 self.environment_training.trail_original_pos)
+                                                    self.prev_action_AI_agent, 
+                                                    reward, 
+                                                    int(self.done), 
+                                                    self.environment_training.prev_pos, 
+                                                    self.environment_training.trail_original_pos)
     
     def setup_new_game(self):
         new_target = [1.0]
-        self.ROSnode_transfer_data.publish2Ros(new_target)
-        # print(new_target)
-        self.state.update(self.ROSnode_transfer_data.unityState, self.action_Unity_Unity_adaptor)
+        self.publish2Ros(new_target)
+        # self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
         self.environment_training.restart_game(self.state.current_car_state_training)
 
     def start_next_episode(self):
@@ -103,7 +112,7 @@ class TrainingManager(Node):
         is_restart_game = self.environment_training.restart_episode()
         if is_restart_game:
             self.setup_new_game()
-    
+
     def reset_learning_data(self):
         self.sum_of_reward_in_one_episode = 0
         self.loss_training_Critic = []
@@ -138,25 +147,45 @@ class TrainingManager(Node):
                      i, 
                      path=self.agent_training.path_save_result_plot)
 
-    def train(self):
-        load_step = 0
-        for i in range(load_step + 1, load_step + PARAMETER["epoch"] + 1):
-            if self.ROSnode_transfer_data.not_connect_to_Unity():
-                self.state.current_car_state_training = self.ROSnode_transfer_data.connect_Unity(self.state, self.action_Unity_Unity_adaptor)
-                self.environment_training.restart_game(self.state.current_car_state_training)
-            else:
-                # print(self.state.current_car_state_training)
-                self.start_next_episode()
-
+    def send_action(self, msg):
+        self.unityState = msg.data
+        self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
+        if(self.state.current_car_state_training.isFirst == True):
+            self.setup_new_game()
+        else:
+            self.start_next_episode()
             self.reset_learning_data()
-            self.train_one_episode()
-            self.update_learning_data()
+            self.send_Action_to_Unity(self.environment_training.prev_pos, 
+                                      self.environment_training.trail_original_pos)
+        print("Send action")
+        time.sleep(0.5)
+        
+        if(self.epoch == PARAMETER["epoch"]):
+            print("Finish training!")
+            exit()
 
-            if (i) % 200 == 0:
-                self.agent_training.save_models(i)
-                self.plot(i)
+    def train(self, msg):
+        self.unityState = msg.data
+        print("Train")
+
+        self.reset_learning_data()
+        self.train_one_episode()
+        self.update_learning_data()
+
+        if (self.epoch) % 200 == 0:
+            self.agent_training.save_models(self.epoch)
+            self.plot_data(self.epoch)
+        
+        self.epoch += 1
 
 if __name__ == '__main__':
+    rclpy.init()
+    
     mode = 'train'
     training_manager = TrainingManager(mode)
-    training_manager.train()
+    exe = rclpy.executors.SingleThreadedExecutor()
+    exe.add_node(training_manager)
+    exe.spin()
+
+    rclpy.shutdown()
+    sys.exit(0)
