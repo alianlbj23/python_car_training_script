@@ -28,6 +28,7 @@ class AINode(Node):
         while len(self.unityState) == 0:
             pass
         return self.unityState
+   
     def not_connect_to_Unity(self):
         if len(self.unityState) == 0:
             return True

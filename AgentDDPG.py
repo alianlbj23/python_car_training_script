@@ -85,7 +85,6 @@ class Agent():
 
         self.update_network_parameters(rho=1)
 
-
     def update_network_parameters(self, rho=None):
         if rho is None:
             rho = self.rho

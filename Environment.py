@@ -41,6 +41,9 @@ class Environment():
         self.game_finished = False
         self.reach_goal = False
 
+        # 新加的
+        self.trail_original_pos = [0,0]
+
     def calculate_orientation_diff(self, car_orientation, target_orientation):
         diff = abs(target_orientation - car_orientation)
         if diff > 180:
@@ -111,21 +114,21 @@ class Environment():
         self.reach_goal = ((abs(self.carOrientation - self.targetOrientation) <= 20) \
                            and distance <= self.end_distance[0])
 
-        print("distance", distance)
+        # print("distance", distance)
         self.distance_out = distance >= self.end_distance[1] or distance <= self.end_distance[0]
         try:
             self.game_finished = self.game_ctr >= self.max_times_in_game or collision or self.turnover
 
         except:
             pass
-        if self.reach_goal:
-            print("reach_goal!!!!!!!!!!!!!!!!!!!")
-        if self.game_finished:
-            print("game_ctr >= {}".format(self.max_times_in_game))
-        if distance <= self.end_distance[0]:
-            print("distance <= {}".format(self.end_distance[0]))
-        if distance >= self.end_distance[1]:
-            print("distance >= {}".format(self.end_distance[1]))
+        # if self.reach_goal:
+        #     print("reach_goal!!!!!!!!!!!!!!!!!!!")
+        # if self.game_finished:
+        #     print("game_ctr >= {}".format(self.max_times_in_game))
+        # if distance <= self.end_distance[0]:
+        #     print("distance <= {}".format(self.end_distance[0]))
+        # if distance >= self.end_distance[1]:
+        #     print("distance >= {}".format(self.end_distance[1]))
 
         done = self.reach_goal or self.distance_out \
                or self.episode_ctr >= self.max_times_in_episode \
@@ -199,8 +202,11 @@ class Environment():
         if reachGoal:
             reward += 400
 
-        info = {'prev pos': []}
-        info['prev pos'] = self.prev_pos
-        info['trail original pos'] = [0, 0]
+        # info = {'prev pos': []}
+        # info['prev pos'] = self.prev_pos
+        # info['trail original pos'] = [0, 0]
+        
+        self.trail_original_pos = [0, 0]
+        return reward, done
 
-        return reward, done, info
+        # return reward, done, info

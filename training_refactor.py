@@ -1,13 +1,11 @@
 import torch
 import numpy as np
-
 import Utility
 from Environment import Environment
 from AgentDDPG import Agent
 from UnityAdaptor import UnityAdaptor
 import random
 import time
-
 
 from AINode import AINode
 from ROS2NodeManager import ROS2NodeManager
@@ -122,14 +120,6 @@ def main(mode):
             for i in range(load_step + 1, load_step + PARAMETER["epoch"] + 1):
                 if ROSnode_transfer_data.not_connect_to_Unity():
                     state.current_car_state_training = ROSnode_transfer_data.connect_Unity(state, action_Unity_Unity_adaptor)
-
-                    # unityState = ROSnode_transfer_data.unityState
-                    # while len(unityState) == 0:
-                    #     print("Waiting for Unity state...")
-                    #     time.sleep(1)
-                    #     unityState = ROSnode_transfer_data.unityState
-                    # state.update(unityState, action_Unity_Unity_adaptor)
-
                     environment_training.restart_game(state.current_car_state_training)
                 else:
                     print(state.current_car_state_training)
