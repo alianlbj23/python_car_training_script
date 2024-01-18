@@ -6,8 +6,8 @@ import Utility
 from Environment import Environment
 from AgentDDPG import Agent
 from UnityAdaptor import UnityAdaptor
-from AINode import AINode
-from ROS2NodeManager import ROS2NodeManager
+# from AINode import AINode
+# from ROS2NodeManager import ROS2NodeManager
 from entity.State import State
 from config import PARAMETER
 
@@ -17,7 +17,7 @@ from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
 import sys
 
-class TrainingManager(Node):
+class AIModel_Node(Node):
     def __init__(self, mode):
         super().__init__("aiNode")
         self.get_logger().info("Ai start")  # ros2Ai #unity2Ros
@@ -112,6 +112,9 @@ class TrainingManager(Node):
         is_restart_game = self.environment_training.restart_episode()
         if is_restart_game:
             self.setup_new_game()
+        else:
+            self.send_Action_to_Unity(self.environment_training.prev_pos, 
+                                      self.environment_training.trail_original_pos)
 
     def reset_learning_data(self):
         self.sum_of_reward_in_one_episode = 0
@@ -152,37 +155,45 @@ class TrainingManager(Node):
         self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
         if(self.state.current_car_state_training.isFirst == True):
             self.setup_new_game()
-        else:
+        elif self.done:
             self.start_next_episode()
-            self.reset_learning_data()
+        else:
             self.send_Action_to_Unity(self.environment_training.prev_pos, 
                                       self.environment_training.trail_original_pos)
+        # else:
+        #     self.start_next_episode()
+        #     # self.reset_learning_data()
+        #     self.send_Action_to_Unity(self.environment_training.prev_pos, 
+        #                               self.environment_training.trail_original_pos)
         print("Send action")
         time.sleep(0.5)
         
-        if(self.epoch == PARAMETER["epoch"]):
-            print("Finish training!")
-            exit()
+        
 
     def train(self, msg):
         self.unityState = msg.data
         print("Train")
 
-        self.reset_learning_data()
+    
         self.train_one_episode()
-        self.update_learning_data()
+        if self.done == True:
+            self.update_learning_data()
+            self.reset_learning_data()
+            self.epoch += 1
 
         if (self.epoch) % 200 == 0:
             self.agent_training.save_models(self.epoch)
             self.plot_data(self.epoch)
         
-        self.epoch += 1
+        if(self.epoch == PARAMETER["epoch"]):
+            print("Finish training!")
+            exit()
 
 if __name__ == '__main__':
     rclpy.init()
     
     mode = 'train'
-    training_manager = TrainingManager(mode)
+    training_manager = AIModel_Node(mode)
     exe = rclpy.executors.SingleThreadedExecutor()
     exe.add_node(training_manager)
     exe.spin()
