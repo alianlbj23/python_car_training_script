@@ -75,10 +75,11 @@ class AIModel_Node(Node):
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
 
-    def send_Action_to_Unity(self, prev_pos, trail_original_pos):
-        action_AI_agent = self.agent_training.choose_actions(self.state.current_car_state_training, prev_pos, trail_original_pos, inference=False)
+    def send_Action_to_Unity(self, prev_pos):
+        action_AI_agent = self.agent_training.choose_actions(self.state.current_car_state_training, prev_pos, inference=False)
         action_sent_to_unity, action_Unity_Unity_adaptor = self.unity_adaptor_training.transfer_action(action_AI_agent)
         self.action_Unity_Unity_adaptor = action_Unity_Unity_adaptor
+        print(f"speed: [left, right] {action_Unity_Unity_adaptor} ")
         self.publish2Ros(action_sent_to_unity)
         self.prev_action_AI_agent = action_AI_agent
 
@@ -98,8 +99,7 @@ class AIModel_Node(Node):
                                                     self.prev_action_AI_agent, 
                                                     reward, 
                                                     int(self.done), 
-                                                    self.environment_training.prev_pos, 
-                                                    self.environment_training.trail_original_pos)
+                                                    self.environment_training.prev_pos)
     
     def setup_new_game(self):
         new_target = [1.0]
@@ -113,8 +113,7 @@ class AIModel_Node(Node):
         if is_restart_game:
             self.setup_new_game()
         else:
-            self.send_Action_to_Unity(self.environment_training.prev_pos, 
-                                      self.environment_training.trail_original_pos)
+            self.send_Action_to_Unity(self.environment_training.prev_pos)
 
     def reset_learning_data(self):
         self.sum_of_reward_in_one_episode = 0
@@ -158,23 +157,15 @@ class AIModel_Node(Node):
         elif self.done:
             self.start_next_episode()
         else:
-            self.send_Action_to_Unity(self.environment_training.prev_pos, 
-                                      self.environment_training.trail_original_pos)
-        # else:
-        #     self.start_next_episode()
-        #     # self.reset_learning_data()
-        #     self.send_Action_to_Unity(self.environment_training.prev_pos, 
-        #                               self.environment_training.trail_original_pos)
-        print("Send action")
+            self.send_Action_to_Unity(self.environment_training.prev_pos)
+
         time.sleep(0.5)
         
         
 
     def train(self, msg):
         self.unityState = msg.data
-        print("Train")
 
-    
         self.train_one_episode()
         if self.done == True:
             self.update_learning_data()

@@ -157,9 +157,6 @@ class Agent():
 
         lr_c = self.get_lr(self.critic.optimizer)
 
-        # self.critic_lr_scheduler.step()
-        # lr_c = self.critic_lr_scheduler.get_last_lr()
-
         if self.updates % 1 == 0:
             self.actor.eval()
             actions = self.actor.forward(state)
@@ -175,9 +172,6 @@ class Agent():
             self.actor.optimizer.step()
 
             lr_a = self.get_lr(self.actor.optimizer)
-
-            # self.actor_lr_scheduler.step()
-            # lr_a = self.actor_lr_scheduler.get_last_lr()
 
             self.update_network_parameters()
 
@@ -211,14 +205,14 @@ class Agent():
         self.target_critic.eval()
         self.target_actor.eval()
 
-    def store_transition(self, state, actions, rewards, done, prev_pos, trail_original_pos):
-        self.memory.store_transition(self.processFeature(state.prev_car_state_training, prev_pos, trail_original_pos), actions, rewards,
-                                     self.processFeature(state.current_car_state_training, prev_pos, trail_original_pos), done)
+    def store_transition(self, state, actions, rewards, done, prev_pos):
+        self.memory.store_transition(self.processFeature(state.prev_car_state_training, prev_pos), actions, rewards,
+                                     self.processFeature(state.current_car_state_training, prev_pos), done)
 
     # override
-    def choose_actions(self, obs, prev_pos, trail_original_pos, inference):
+    def choose_actions(self, obs, prev_pos, inference):
         self.actor.eval()
-        obs = self.processFeature(obs, prev_pos, trail_original_pos)
+        obs = self.processFeature(obs, prev_pos)
         obs = torch.tensor(obs, dtype=torch.float).to(self.device)
         with torch.no_grad():
             actions = self.actor.forward(obs).to(self.device)
@@ -230,7 +224,7 @@ class Agent():
 
         return actions.cpu().detach().numpy()
 
-    def processFeature(self, state, prev_pos, trail_original_pos):
+    def processFeature(self, state, prev_pos):
         feature = []
 
         # distance between car and target

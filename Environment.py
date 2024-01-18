@@ -41,9 +41,6 @@ class Environment():
         self.game_finished = False
         self.reach_goal = False
 
-        # 新加的
-        self.trail_original_pos = [0,0]
-
     def calculate_orientation_diff(self, car_orientation, target_orientation):
         diff = abs(target_orientation - car_orientation)
         if diff > 180:
@@ -96,7 +93,6 @@ class Environment():
         self.game_ctr = 0
         self.pos = [state.car_pos.x, state.car_pos.y]
         self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
-        self.trail_original_pos = [state.path_closest_pos.x, state.path_closest_pos.y]
         self.distance = self.calculate_distance(self.pos, self.target_pos)
 
     # override
@@ -163,7 +159,6 @@ class Environment():
 
         ### angle gap to target
         prevTargetOrientation = Utility.rad2deg(Utility.radFromUp(self.prev_pos, target_pos))
-
         prevAngleGapToTarget = self.calculate_orientation_diff(prevCarOrientation, prevTargetOrientation)
         TargetOrientation = Utility.rad2deg(Utility.radFromUp(self.pos, target_pos))
         angleGapToTarget = self.calculate_orientation_diff(self.carOrientation, TargetOrientation)
@@ -186,9 +181,6 @@ class Environment():
             reward += -200 * self.stucked_count
             print("count ", self.stucked_count)
 
-        # print("total ", reward)
-        # print("----------------------")
-
         return reward
     
     def step(self, state, new_state):
@@ -202,11 +194,5 @@ class Environment():
         if reachGoal:
             reward += 400
 
-        # info = {'prev pos': []}
-        # info['prev pos'] = self.prev_pos
-        # info['trail original pos'] = [0, 0]
-        
-        self.trail_original_pos = [0, 0]
         return reward, done
-
-        # return reward, done, info
+    

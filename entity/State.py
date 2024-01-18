@@ -10,9 +10,6 @@ class StateType(BaseModel):
     final_target_pos: ROS2Point
     car_pos: ROS2Point
     objectUpVector: float = 0
-    path_closest_pos: ROS2Point
-    path_second_pos: ROS2Point
-    path_farthest_pos: ROS2Point
     car_vel: ROS2Point  # in ROS2 coordinate system
     car_orientation: float = 0  # radians, around ROS2 z axis, counter-clockwise: 0 - 359
     wheel_orientation: WheelOrientation  # around car z axis, counter-clockwise: +, clockwise: -, r/s
@@ -33,9 +30,6 @@ class State:
         self.prev_car_state_training = StateType(final_target_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
                          car_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
                          objectUpVector=0,
-                         path_closest_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         path_second_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         path_farthest_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
                          car_vel=ROS2Point(x=0.0, y=0.0, z=0.0),
                          car_orientation=0.0,
                          wheel_orientation=WheelOrientation(left_front=0.0, right_front=0.0),
@@ -43,9 +37,6 @@ class State:
                          wheel_angular_vel=WheelAngularVel(left_back=0.0, left_front=0.0, right_back=0.0,
                                                                   right_front=0.0),
                          min_lidar=[],
-                         min_lidar_position=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         second_min_lidar_position=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         third_min_lidar_position=ROS2Point(x=0.0, y=0.0, z=0.0),
                          max_lidar=0.0,
                          min_lidar_direciton=[0.0],
                          isFirst= True,
@@ -157,15 +148,7 @@ class State:
             car_pos=ROS2Point(x=data['ROS2CarPosition'][0],
                               y=data['ROS2CarPosition'][1],
                               z=data['ROS2CarPosition'][1]),  # data[2]
-            path_closest_pos=ROS2Point(x=data['ROS2PathPositionClosest'][0],
-                                       y=data['ROS2PathPositionClosest'][1],
-                                       z=0.0),  # data[8]
-            path_second_pos=ROS2Point(x=data['ROS2PathPositionSecondClosest'][0],
-                                      y=data['ROS2PathPositionSecondClosest'][1],
-                                      z=0.0),  # data[11]
-            path_farthest_pos=ROS2Point(x=data['ROS2PathPositionFarthest'][0],
-                                        y=data['ROS2PathPositionFarthest'][1],
-                                        z=0.0),  # data[14] #data[15~17] ROS2CarPosition
+                              
             car_vel=ROS2Point(x=data['ROS2CarVelocity'][0],
                               y=data['ROS2CarVelocity'][1],
                               z=0.0),  # data[20]

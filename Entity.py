@@ -24,10 +24,6 @@ class State(BaseModel):
     final_target_pos: ROS2Point
     car_pos: ROS2Point
     objectUpVector: float
-    # path: list = []
-    path_closest_pos: ROS2Point
-    path_second_pos: ROS2Point
-    path_farthest_pos: ROS2Point
     car_vel: ROS2Point  # in ROS2 coordinate system
     car_orientation: float  # radians, around ROS2 z axis, counter-clockwise: 0 - 359
     wheel_orientation: WheelOrientation  # around car z axis, counter-clockwise: +, clockwise: -, r/s
