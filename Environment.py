@@ -85,7 +85,6 @@ class Environment():
             if (self.time - self.prev_time) >= self.target_fixed_sec:
                 self.prev_time = self.time
             is_restart_game = True
-
         return is_restart_game
 
     def restart_game(self, state):
@@ -102,7 +101,7 @@ class Environment():
             collision = min(state.min_lidar) < 0.1
         except:
             pass
-        self.turnover = (state.objectUpVector < 0)
+
         self.pos = [state.car_pos.x, state.car_pos.y]
         self.target_pos = [state.final_target_pos.x, state.final_target_pos.y]
         distance = math.dist(self.pos, self.target_pos)
@@ -113,14 +112,17 @@ class Environment():
         # print("distance", distance)
         self.distance_out = distance >= self.end_distance[1] or distance <= self.end_distance[0]
         try:
-            self.game_finished = self.game_ctr >= self.max_times_in_game or collision or self.turnover
+            self.game_finished = self.game_ctr >= self.max_times_in_game or collision
 
         except:
             pass
         if self.reach_goal:
             print("reach_goal!!!!!!!!!!!!!!!!!!!")
         if self.game_finished:
-            print("game_ctr >= {}".format(self.max_times_in_game))
+            if collision == True:
+                print("collide with walls")
+            else:
+                print("game_ctr >= {}".format(self.max_times_in_game))
         if distance <= self.end_distance[0]:
             print("distance <= {}".format(self.end_distance[0]))
         if distance >= self.end_distance[1]:

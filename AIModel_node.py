@@ -83,15 +83,15 @@ class AIModel_Node(Node):
         self.publish2Ros(action_sent_to_unity)
         self.prev_action_AI_agent = action_AI_agent
 
-    def receive_State_from_Unity(self):
-        unity_new_obs = self.ROSnode_transfer_data.return_unity_state()
-        self.state.update(unity_new_obs, self.action_Unity_Unity_adaptor)
-        reward, self.done = self.environment_training.step(self.state.prev_car_state_training, self.state.current_car_state_training)
-        return reward
+    # def receive_State_from_Unity(self):
+    #     unity_new_obs = self.ROSnode_transfer_data.return_unity_state()
+    #     self.state.update(unity_new_obs, self.action_Unity_Unity_adaptor)
+    #     reward, self.done = self.environment_training.step(self.state.prev_car_state_training, self.state.current_car_state_training)
+    #     return reward
     
     def train_one_episode(self):
+        
         if (not self.done):
-            self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
             reward, self.done = self.environment_training.step(self.state.prev_car_state_training, self.state.current_car_state_training)
             
             self.sum_of_reward_in_one_episode += reward
@@ -150,6 +150,7 @@ class AIModel_Node(Node):
                      path=self.agent_training.path_save_result_plot)
 
     def send_action(self, msg):
+        time.sleep(0.5)
         self.unityState = msg.data
         self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
         if(self.state.current_car_state_training.isFirst == True):
@@ -159,13 +160,9 @@ class AIModel_Node(Node):
         else:
             self.send_Action_to_Unity(self.environment_training.prev_pos)
 
-        time.sleep(0.5)
-        
-        
-
     def train(self, msg):
         self.unityState = msg.data
-
+        self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
         self.train_one_episode()
         if self.done == True:
             self.update_learning_data()

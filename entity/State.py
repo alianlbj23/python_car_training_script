@@ -9,7 +9,6 @@ import math
 class StateType(BaseModel):
     final_target_pos: ROS2Point
     car_pos: ROS2Point
-    objectUpVector: float = 0
     car_vel: ROS2Point  # in ROS2 coordinate system
     car_orientation: float = 0  # radians, around ROS2 z axis, counter-clockwise: 0 - 359
     wheel_orientation: WheelOrientation  # around car z axis, counter-clockwise: +, clockwise: -, r/s
@@ -29,7 +28,6 @@ class State:
     def __init__(self) -> None:
         self.prev_car_state_training = StateType(final_target_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
                          car_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         objectUpVector=0,
                          car_vel=ROS2Point(x=0.0, y=0.0, z=0.0),
                          car_orientation=0.0,
                          wheel_orientation=WheelOrientation(left_front=0.0, right_front=0.0),
@@ -120,8 +118,7 @@ class State:
         wheel_quaternion_left_front = [data['ROS2WheelQuaternionLeftFront'][0],
                                        data['ROS2WheelQuaternionLeftFront'][1],
                                        data['ROS2WheelQuaternionLeftFront'][2],
-                                       data['ROS2WheelQuaternionLeftFront'][
-                                           3]]  # 48 49 50 51ROS2WheelQuaternionRightBack
+                                       data['ROS2WheelQuaternionLeftFront'][3]]  # 48 49 50 51ROS2WheelQuaternionRightBack
         wheel_left_front_roll_x, wheel_left_front_pitch_y, wheel_left_front_yaw_z = self.__euler_from_quaternion(
             wheel_quaternion_left_front)
 
@@ -144,7 +141,6 @@ class State:
             final_target_pos=ROS2Point(x=data['ROS2TargetPosition'][0],
                                        y=data['ROS2TargetPosition'][1],
                                        z=0.0),  # data[5]
-            objectUpVector=data['objectUpVector'],
             car_pos=ROS2Point(x=data['ROS2CarPosition'][0],
                               y=data['ROS2CarPosition'][1],
                               z=data['ROS2CarPosition'][1]),  # data[2]
@@ -174,6 +170,5 @@ class State:
                                                      ),
             action_wheel_orientation=WheelOrientation(left_front=self.__discretize_wheel_steering_angle(ai_action[0]), \
                                                       right_front=self.__discretize_wheel_steering_angle(ai_action[0])),
-            isFirst = data["isFirst"]
-
+            isFirst = data["isFirst"] 
         )
