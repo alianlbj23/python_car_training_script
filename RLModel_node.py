@@ -6,24 +6,22 @@ import Utility
 from Environment import Environment
 from AgentDDPG import Agent
 from UnityAdaptor import UnityAdaptor
-# from AINode import AINode
-# from ROS2NodeManager import ROS2NodeManager
 from entity.State import State
 from config import PARAMETER
 
-from rclpy.node import Node
 import rclpy
+from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
 import sys
 
-class AIModel_Node(Node):
+class RLModel_Node(Node):
     def __init__(self, mode):
-        super().__init__("aiNode")
-        self.get_logger().info("Ai start")  # ros2Ai #unity2Ros
+        super().__init__("RL_Node")
+        self.get_logger().info("Reinforced learning start")
         self.subscriber_send_action = self.create_subscription(String, "/Unity2Trainer", self.send_action, 10)
         self.subscriber = self.create_subscription(String, "/Unity2Trainer", self.train, 10)
-        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, '/Trainer2Unity', 10)  # Ai2ros #ros2Unity
+        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, '/Trainer2Unity', 10)
         self.unityState = ""
         self.epoch = 1
         
@@ -181,7 +179,7 @@ if __name__ == '__main__':
     rclpy.init()
     
     mode = 'train'
-    training_manager = AIModel_Node(mode)
+    training_manager = RLModel_Node(mode)
     exe = rclpy.executors.SingleThreadedExecutor()
     exe.add_node(training_manager)
     exe.spin()
