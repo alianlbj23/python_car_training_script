@@ -7,8 +7,6 @@ from RL.config import UNITY
 DEG2RAD = 0.01745329251
 
 
-# FRONTDEGREE = 90
-
 class UnityAdaptor():
     def __init__(self):
         self.action_range = UNITY["action_range"]
@@ -20,7 +18,6 @@ class UnityAdaptor():
         unity_action[0] = ai_action[0] * self.action_range
         unity_action[0] = float(clamp(unity_action[0], -self.action_range, self.action_range))
 
-        ############################# forward
         unity_action[1] = ai_action[1] * self.action_range
         unity_action[1] = float(clamp(unity_action[1], -self.action_range, self.action_range))
 

@@ -80,12 +80,6 @@ class RLModel_Node(Node):
         print(f"speed: [left, right] {action_Unity_Unity_adaptor} ")
         self.publish2Ros(action_sent_to_unity)
         self.prev_action_AI_agent = action_AI_agent
-
-    # def receive_State_from_Unity(self):
-    #     unity_new_obs = self.ROSnode_transfer_data.return_unity_state()
-    #     self.state.update(unity_new_obs, self.action_Unity_Unity_adaptor)
-    #     reward, self.done = self.environment_training.step(self.state.prev_car_state_training, self.state.current_car_state_training)
-    #     return reward
     
     def train_one_episode(self):
         

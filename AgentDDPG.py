@@ -142,7 +142,6 @@ class Agent():
                               self.gamma * critic_value_[i])
             target = torch.tensor(target, dtype=torch.float).to(self.device)
             target = target.view(self.batch_size, 1)
-            # target = reward + (1 - d) * self.gamma * critic_value_
 
         self.critic.eval()
         critic_value = self.critic.forward(state, actions)
@@ -235,22 +234,15 @@ class Agent():
         rad = Utility.radFromUp([state.car_pos.x, state.car_pos.y], \
                                 [state.final_target_pos.x, state.final_target_pos.y])
         feature.append(Utility.decomposeCosSin(rad))  # cos(radian), sin(radian) *2
-        # print("car to target: ", rad / DEG2RAD)
 
         # car orientation(eular angles in radians)
         feature.append(Utility.decomposeCosSin(state.car_orientation))
-        # print("car: ", state.car_orientation / DEG2RAD)
 
-        # car velocity
         feature.append(state.car_vel.x)
         feature.append(state.car_vel.y)
-        # print(state.car_vel.x)
 
         # car angular velocity in radians(eular angles in radians)
         feature.append(state.car_angular_vel)
-        # print(state.car_angular_vel)
-
-        # 前進軸 angular velocity in radians *4 --> *1
 
         feature.append(state.wheel_angular_vel.left_back)
         feature.append(state.wheel_angular_vel.right_back)

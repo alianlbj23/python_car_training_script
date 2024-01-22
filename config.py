@@ -2,10 +2,8 @@ DEG2RAD = 0.01745329251
 # ----------------environment--------------- #
 
 ENVIRONMENT = {
-    # users can change: max_times_in_episode, max_times_in_game, end_distance
     "MAX_TIMES_IN_EPISODE": 30,
     "MAX_TIMES_IN_GAME": 210,
-    # (reach goal, distance out)
     "END_DISTANCE": (0.2, 7), 
     "STOP_TARGET":False,
     "TARGET_FIXED_SEC":12
@@ -21,7 +19,6 @@ PATH = {
     "PLOT_PATH": './Model/DDPG/0809_car',
     "LOG_PATH":'./Model/DDPG/0809_car/log'
 }
-
 # ------------paths -------------------#
 
 # -------------------------Agent -------------------#
@@ -39,10 +36,8 @@ AGENT = {
     "layer2_size": 300,
     "load_step": 0
 }
-
 # ------------------------ Agent -------------------#
 
-# --------------UnityAdaptor -------------#
 UNITY = {
     "action_range": 600,
     "steering_angle_range":20

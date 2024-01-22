@@ -6,6 +6,7 @@ from RL.entity.WheelAngularVel import WheelAngularVel
 import json
 import math
 
+
 class StateType(BaseModel):
     final_target_pos: Coordinate
     car_pos: Coordinate

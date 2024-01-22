@@ -22,7 +22,6 @@ class CriticNetwork(nn.Module):
         self.chept_dir_save = chept_dir_save
 
         self.optimizer = optim.Adam(self.parameters(), lr=q_lr)
-        # self.optimizer = optim.RMSprop(self.parameters(), lr=1e-4)
         self.device = torch.device(
             'cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
@@ -67,7 +66,6 @@ class ActorNetwork(nn.Module):
         self.chept_dir_save = chept_dir_save
 
         self.optimizer = optim.Adam(self.parameters(), lr=pi_lr)
-        # self.optimizer = optim.RMSprop(self.parameters(), lr=1e-4)
         self.device = torch.device(
             'cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
@@ -120,7 +118,6 @@ class ReplayBuffer():
 
     def sample_buffer(self, batch_size):
         max_mem = min(self.cntr, self.size)
-        # batch = np.random.choice(max_mem, batch_size)
         batch = np.random.randint(0, max_mem, size=batch_size)
         states = self.state_mem[batch]
         actions = self.action_mem[batch]
@@ -180,7 +177,6 @@ class PretrainedCriticNetwork(nn.Module):
         self.chept_dir_save = chept_dir_save
 
         self.optimizer = optim.Adam(self.parameters(), lr=q_lr)
-        # self.optimizer = optim.RMSprop(self.parameters(), lr=1e-4)
         self.device = torch.device(
             'cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
@@ -218,7 +214,6 @@ class PretrainedActorNetwork(nn.Module):
         self.chept_dir_save = chept_dir_save
 
         self.optimizer = optim.Adam(self.parameters(), lr=pi_lr)
-        # self.optimizer = optim.RMSprop(self.parameters(), lr=1e-4)
         self.device = torch.device(
             'cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
