@@ -2,12 +2,12 @@ import torch
 import numpy as np
 import random
 import time
-import Utility
-from Environment import Environment
-from AgentDDPG import Agent
-from UnityAdaptor import UnityAdaptor
-from entity.State import State
-from config import PARAMETER
+import RL.Utility as Utility
+from RL.Environment import Environment
+from RL.AgentDDPG import Agent
+from RL.UnityAdaptor import UnityAdaptor
+from RL.entity.State import State
+from RL.config import PARAMETER
 
 import rclpy
 from rclpy.node import Node

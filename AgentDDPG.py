@@ -1,12 +1,12 @@
-import DDPG
-import Utility
+import RL.DDPG as DDPG
+import RL.Utility as Utility
 from stable_baselines3.common.noise import NormalActionNoise
 import torch.nn.functional as F
 import numpy as np
 import torch
 import abc
 import os
-from config import AGENT, PATH
+from RL.config import AGENT, PATH
 
 
 class Agent():

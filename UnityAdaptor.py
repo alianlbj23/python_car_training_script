@@ -1,8 +1,8 @@
 import math
 import numpy as np
-from Utility import clamp
+from RL.Utility import clamp
 import json
-from config import UNITY
+from RL.config import UNITY
 
 DEG2RAD = 0.01745329251
 

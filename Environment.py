@@ -1,10 +1,10 @@
 import torch
-import Utility
+import RL.Utility as Utility
 import math
 import os
 import json
 from datetime import datetime
-from config import ENVIRONMENT
+from RL.config import ENVIRONMENT
 
 class Environment():
     def __init__(self, save_log=False, min_angle_diff=10):
