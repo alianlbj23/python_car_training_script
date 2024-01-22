@@ -1,15 +1,15 @@
 from pydantic import BaseModel
-
-from entity.ROS2Point import ROS2Point 
+from entity.Coordinate import Coordinate 
+from entity.Velocity import Velocity 
 from entity.WheelOrientation import WheelOrientation
 from entity.WheelAngularVel import WheelAngularVel
 import json
 import math
 
 class StateType(BaseModel):
-    final_target_pos: ROS2Point
-    car_pos: ROS2Point
-    car_vel: ROS2Point  # in ROS2 coordinate system
+    final_target_pos: Coordinate
+    car_pos: Coordinate
+    car_vel: Velocity  # in ROS2 coordinate system
     car_orientation: float = 0  # radians, around ROS2 z axis, counter-clockwise: 0 - 359
     wheel_orientation: WheelOrientation  # around car z axis, counter-clockwise: +, clockwise: -, r/s
     car_angular_vel: float  # r/s, in ROS2 around car z axis, yaw++: -, yaw--: +, counter-clockwise: +, clockwise: -, in Unity:  counter-clockwise: -, clockwise: +
@@ -26,9 +26,9 @@ class StateType(BaseModel):
 
 class State:
     def __init__(self) -> None:
-        self.prev_car_state_training = StateType(final_target_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         car_pos=ROS2Point(x=0.0, y=0.0, z=0.0),
-                         car_vel=ROS2Point(x=0.0, y=0.0, z=0.0),
+        self.prev_car_state_training = StateType(final_target_pos=Coordinate(x=0.0, y=0.0, z=0.0),
+                         car_pos=Coordinate(x=0.0, y=0.0, z=0.0),
+                         car_vel=Velocity(x=0.0, y=0.0, z=0.0),
                          car_orientation=0.0,
                          wheel_orientation=WheelOrientation(left_front=0.0, right_front=0.0),
                          car_angular_vel=0.0,
@@ -138,14 +138,14 @@ class State:
         self.prev_car_state_training = self.current_car_state_training
 
         self.current_car_state_training = StateType(
-            final_target_pos=ROS2Point(x=data['ROS2TargetPosition'][0],
+            final_target_pos=Coordinate(x=data['ROS2TargetPosition'][0],
                                        y=data['ROS2TargetPosition'][1],
                                        z=0.0),  # data[5]
-            car_pos=ROS2Point(x=data['ROS2CarPosition'][0],
+            car_pos=Coordinate(x=data['ROS2CarPosition'][0],
                               y=data['ROS2CarPosition'][1],
                               z=data['ROS2CarPosition'][1]),  # data[2]
                               
-            car_vel=ROS2Point(x=data['ROS2CarVelocity'][0],
+            car_vel=Velocity(x=data['ROS2CarVelocity'][0],
                               y=data['ROS2CarVelocity'][1],
                               z=0.0),  # data[20]
             car_orientation=car_orientation,
