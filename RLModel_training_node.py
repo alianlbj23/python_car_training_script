@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import random
-import time
+# import time
 import RL.Utility as Utility
 from RL.Environment import Environment
 from RL.AgentDDPG import Agent
@@ -13,19 +13,18 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
-import sys
+# import sys
 
 class RLModel_Node(Node):
-    def __init__(self, mode):
+    def __init__(self):
         super().__init__("RL_Node")
         self.get_logger().info("Reinforced learning start")
-        self.subscriber_send_action = self.create_subscription(String, "/Unity2Trainer", self.send_action, 10)
-        self.subscriber = self.create_subscription(String, "/Unity2Trainer", self.train, 10)
-        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, '/Trainer2Unity', 10)
+        self.subscriber_send_action = self.create_subscription(String, "/Unity2Trainer", self.send_action, 0)
+        self.subscriber = self.create_subscription(String, "/Unity2Trainer", self.train, 0)
+        self.publisher_Ai2ros = self.create_publisher(Float32MultiArray, '/Trainer2Unity', 0)
         self.unityState = ""
         self.epoch = 1
         
-        self.mode = mode
         self.state = State()
         self.environment_training = Environment()
         self.agent_training = Agent()
@@ -96,7 +95,6 @@ class RLModel_Node(Node):
     def setup_new_game(self):
         new_target = [1.0]
         self.publish2Ros(new_target)
-        # self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
         self.environment_training.restart_game(self.state.current_car_state_training)
 
     def start_next_episode(self):
@@ -142,7 +140,7 @@ class RLModel_Node(Node):
                      path=self.agent_training.path_save_result_plot)
 
     def send_action(self, msg):
-        time.sleep(0.5)
+        # time.sleep(0.5)
         self.unityState = msg.data
         self.state.update(self.unityState, self.action_Unity_Unity_adaptor)
         if(self.state.current_car_state_training.isFirst == True):
@@ -168,15 +166,3 @@ class RLModel_Node(Node):
         if(self.epoch == PARAMETER["epoch"]):
             print("Finish training!")
             exit()
-
-if __name__ == '__main__':
-    rclpy.init()
-    
-    mode = 'train'
-    training_manager = RLModel_Node(mode)
-    exe = rclpy.executors.SingleThreadedExecutor()
-    exe.add_node(training_manager)
-    exe.spin()
-
-    rclpy.shutdown()
-    sys.exit(0)

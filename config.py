@@ -34,7 +34,7 @@ AGENT = {
     "batch_size": 100,
     "layer1_size": 400,
     "layer2_size": 300,
-    "load_step": 0
+    "load_step": 400
 }
 # ------------------------ Agent -------------------#
 
